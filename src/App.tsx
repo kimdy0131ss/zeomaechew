@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { questions } from './data/decisionTree'
-import { findRecommendedMenus } from './services/menuService'
-import type { Decision, Menu } from './types/menu'
+import { fetchMenus } from './services/menuService'
+import { MenuDecisionTree, type DecisionTreeNode } from './services/menuDecisionTree'
+import type { Menu } from './types/menu'
 
 const sampleMenus: Menu[] = [
   {
@@ -126,78 +127,41 @@ const sampleMenus: Menu[] = [
   },
 ]
 
-function rankMenus(menus: Menu[], decision: Decision) {
-  return menus
-    .map((menu) => ({ menu, score: scoreMenu(menu, decision) }))
-    .sort((left, right) => right.score - left.score)
-    .slice(0, 3)
-    .map(({ menu }) => menu)
-}
-
-function scoreMenu(menu: Menu, decision: Decision) {
-  let score = 0
-  if (menu.mealFormat === decision.mealFormat) score += 3
-  if (menu.temperature === decision.temperature) score += 3
-  if (menu.weight === decision.weight) score += 3
-  if (menu.spicyLevel === decision.spicyLevel) score += 2
-  if (menu.category === decision.category) score += 2
-  if (menu.mealTime === decision.mealTime) score += 2
-  if (menu.mainIngredient === decision.mainIngredient) score += 2
-  if (menu.company === decision.company) score += 1
-  if (matchesBudget(menu, decision.budget)) score += 3
-  return score
-}
-
-function matchesBudget(menu: Menu, budget?: string) {
-  const ranges: Record<string, [number, number]> = {
-    under_10000: [0, 10000],
-    '10000_to_15000': [10000, 15000],
-    over_15000: [15000, Number.POSITIVE_INFINITY],
-  }
-  const range = budget ? ranges[budget] : undefined
-  return Boolean(range && menu.priceFrom <= range[1] && menu.priceTo >= range[0])
-}
-
 function App() {
-  const [step, setStep] = useState(0)
-  const [decision, setDecision] = useState<Decision>({})
-  const [menus, setMenus] = useState<Menu[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [tree, setTree] = useState(() => new MenuDecisionTree(sampleMenus))
+  const [node, setNode] = useState<DecisionTreeNode>(() => new MenuDecisionTree(sampleMenus).root)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const question = questions[step]
-  const isResult = step === questions.length
+  const question = tree.getQuestion(node)
+  const options = tree.getAvailableOptions(node)
+  const isResult = node.questionIndex === questions.length
 
-  async function choose(value: string) {
-    if (!question) return
-
-    const nextDecision = { ...decision, [question.key]: value }
-    setDecision(nextDecision)
-
-    if (step < questions.length - 1) {
-      setStep((current) => current + 1)
-      return
+  useEffect(() => {
+    async function loadMenus() {
+      try {
+        const menus = await fetchMenus()
+        if (menus.length) {
+          const nextTree = new MenuDecisionTree(menus)
+          setTree(nextTree)
+          setNode(nextTree.root)
+        }
+      } catch {
+        setError('메뉴를 불러오지 못해 예시 메뉴로 가지를 만들었어요.')
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    setIsLoading(true)
-    setError('')
-    try {
-      const recommended = await findRecommendedMenus(nextDecision)
-      setMenus(recommended.length ? recommended : rankMenus(sampleMenus, nextDecision))
-      setStep(questions.length)
-    } catch {
-      setMenus(rankMenus(sampleMenus, nextDecision))
-      setError('메뉴를 불러오지 못해 예시 추천을 보여드려요.')
-      setStep(questions.length)
-    } finally {
-      setIsLoading(false)
-    }
+    void loadMenus()
+  }, [])
+
+  function choose(value: string) {
+    setNode(tree.select(node, value))
   }
 
   function restart() {
-    setStep(0)
-    setDecision({})
-    setMenus([])
+    setNode(tree.root)
     setError('')
   }
 
@@ -225,8 +189,8 @@ function App() {
       </section>
 
       <section className="journey" aria-live="polite">
-        <div className="progress" aria-label={`총 ${questions.length}단계 중 ${Math.min(step + 1, questions.length)}단계`}>
-          {questions.map((item, index) => <span key={item.key} className={index <= step ? 'progress-node active' : 'progress-node'} />)}
+          <div className="progress" aria-label={`총 ${questions.length}단계 중 ${Math.min(node.questionIndex + 1, questions.length)}단계`}>
+           {questions.map((item, index) => <span key={item.key} className={index <= node.questionIndex ? 'progress-node active' : 'progress-node'} />)}
         </div>
 
         {!isResult ? (
@@ -234,10 +198,10 @@ function App() {
             <p className="step-label">{question.eyebrow}</p>
             <h2>{question.title}</h2>
             <div className="options">
-              {question.options.map((option, index) => (
+              {options.map((option, index) => (
                 <button className="option" key={option.value} onClick={() => choose(option.value)} disabled={isLoading}>
                   <span className="option-number">0{index + 1}</span>
-                  <span><strong>{option.label}</strong><small>{option.hint}</small></span>
+                  <span><strong>{option.label}</strong><small>{option.hint} · {option.candidateCount}개 메뉴 남음</small></span>
                   <span className="arrow">&#8594;</span>
                 </button>
               ))}
@@ -246,12 +210,12 @@ function App() {
         ) : (
           <div className="result-card">
             <p className="step-label">YOUR BRANCH HAS BLOOMED</p>
-            <h2>오늘은 이 메뉴가 어때요?</h2>
+            <h2>조건을 통과한 메뉴예요.</h2>
             {error && <p className="notice">{error}</p>}
             <div className="menu-grid">
-              {menus.map((menu, index) => (
+              {node.candidates.map((menu, index) => (
                 <article className="menu-card" key={menu.id}>
-                  <span className="rank">0{index + 1}</span>
+                  <span className="rank">LEAF 0{index + 1}</span>
                   <p>{menu.category}</p>
                   <h3>{menu.name}</h3>
                   <span className="price">{menu.priceFrom.toLocaleString()} - {menu.priceTo.toLocaleString()}원</span>
