@@ -35,7 +35,7 @@ export const questions: Question[] = [
     options: [
       { label: '쌀쌀해요', value: 'hot', hint: '따뜻한 한 그릇이 필요해요' },
       { label: '따뜻해요', value: 'mild', hint: '부담 없는 메뉴가 좋아요' },
-      { label: '시원해요', value: 'cold', hint: '시원한 메뉴가 당겨요' },
+      { label: '시원해요', value: 'cool', hint: '부담 없는 메뉴가 좋아요' },
       { label: '더워요', value: 'cold', hint: '차갑고 산뜻한 메뉴가 좋아요' },
     ],
   },

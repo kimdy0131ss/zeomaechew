@@ -60,6 +60,7 @@ export class MenuDecisionTree {
 function matches(menu: Menu, key: keyof Decision, value: string) {
   if (key === 'budget') return matchesBudget(menu, value)
   if (key === 'company') return matchesCompany(menu.company, value)
+  if (key === 'temperature') return matchesTemperature(menu.temperature, value)
 
   const menuValue = menu[key]
   return menuValue === value
@@ -67,6 +68,11 @@ function matches(menu: Menu, key: keyof Decision, value: string) {
 
 function matchesCompany(company: Menu['company'], value: string) {
   return Array.isArray(company) ? company.includes(value) : company === value
+}
+
+function matchesTemperature(temperature: Menu['temperature'], value: string) {
+  // "시원해요" is a distinct weather choice but uses the existing mild menu set.
+  return temperature === (value === 'cool' ? 'mild' : value)
 }
 
 function matchesBudget(menu: Menu, budget: string) {
