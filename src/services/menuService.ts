@@ -17,7 +17,7 @@ export async function fetchMenus(): Promise<Menu[]> {
     temperature: string
     spicy_level: string
     meal_time: string
-    company: string
+    company: string | string[]
     main_ingredient: string
     meal_format: string
     description: string
@@ -33,9 +33,16 @@ export async function fetchMenus(): Promise<Menu[]> {
     temperature: menu.temperature,
     spicyLevel: menu.spicy_level,
     mealTime: menu.meal_time,
-    company: menu.company,
+    company: normalizeCompanies(menu.company),
     mainIngredient: menu.main_ingredient,
     mealFormat: menu.meal_format,
     description: menu.description,
   }))
+}
+
+function normalizeCompanies(company: string | string[]) {
+  if (Array.isArray(company)) return company
+
+  // Existing text values remain valid while comma-separated values are supported.
+  return company.split(',').map((value) => value.trim()).filter(Boolean)
 }

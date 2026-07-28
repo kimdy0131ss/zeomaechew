@@ -8,7 +8,7 @@ export type Menu = {
   temperature: string
   spicyLevel: string
   mealTime: string
-  company: string
+  company: string | string[]
   mainIngredient: string
   mealFormat: string
   description: string

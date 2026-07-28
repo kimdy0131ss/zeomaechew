@@ -75,7 +75,7 @@ const sampleMenus: Menu[] = [
     temperature: 'hot',
     spicyLevel: 'none',
     mealTime: 'dinner',
-    company: 'group',
+    company: ['pair', 'group'],
     mainIngredient: 'seafood',
     mealFormat: 'share',
     description: '바삭한 전을 여럿이 나눠 먹기 좋은 메뉴예요.',
@@ -90,7 +90,7 @@ const sampleMenus: Menu[] = [
     temperature: 'mild',
     spicyLevel: 'medium',
     mealTime: 'late',
-    company: 'pair',
+    company: ['solo', 'pair'],
     mainIngredient: 'meat',
     mealFormat: 'handheld',
     description: '바삭한 치킨과 채소를 또르띠야에 담아 간편하게 즐겨요.',
@@ -105,7 +105,7 @@ const sampleMenus: Menu[] = [
     temperature: 'hot',
     spicyLevel: 'none',
     mealTime: 'late',
-    company: 'group',
+    company: ['pair', 'group'],
     mainIngredient: 'seafood',
     mealFormat: 'share',
     description: '작은 딤섬을 여러 종류로 나눠 먹기 좋은 메뉴예요.',
@@ -145,6 +145,8 @@ function App() {
           const nextTree = new MenuDecisionTree(menus)
           setTree(nextTree)
           setNode(nextTree.root)
+        } else {
+          setError('Supabase 메뉴 데이터가 없거나 환경 변수가 설정되지 않아 예시 메뉴를 표시합니다.')
         }
       } catch {
         setError('메뉴를 불러오지 못해 예시 메뉴로 가지를 만들었어요.')
@@ -193,8 +195,8 @@ function App() {
            {questions.map((item, index) => <span key={item.key} className={index <= node.questionIndex ? 'progress-node active' : 'progress-node'} />)}
         </div>
 
-        {!isResult ? (
-          <div className="question-card">
+         {!isResult ? (
+           <div className="question-card">
             <p className="step-label">{question.eyebrow}</p>
             <h2>{question.title}</h2>
             <div className="options">
@@ -205,9 +207,9 @@ function App() {
                   <span className="arrow">&#8594;</span>
                 </button>
               ))}
-            </div>
-          </div>
-        ) : (
+             </div>
+           </div>
+         ) : (
           <div className="result-card">
             <p className="step-label">YOUR BRANCH HAS BLOOMED</p>
             <h2>조건을 통과한 메뉴예요.</h2>
@@ -226,6 +228,7 @@ function App() {
             <button className="restart" onClick={restart}>처음부터 다시 고르기 <span>&#8594;</span></button>
           </div>
         )}
+
       </section>
 
       <footer>MENU TREE / A DECISION TREE FOR EVERYDAY HUNGER</footer>

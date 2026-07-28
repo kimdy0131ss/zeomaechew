@@ -59,9 +59,14 @@ export class MenuDecisionTree {
 
 function matches(menu: Menu, key: keyof Decision, value: string) {
   if (key === 'budget') return matchesBudget(menu, value)
+  if (key === 'company') return matchesCompany(menu.company, value)
 
   const menuValue = menu[key]
   return menuValue === value
+}
+
+function matchesCompany(company: Menu['company'], value: string) {
+  return Array.isArray(company) ? company.includes(value) : company === value
 }
 
 function matchesBudget(menu: Menu, budget: string) {
