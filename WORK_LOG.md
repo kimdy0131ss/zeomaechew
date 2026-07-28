@@ -83,6 +83,11 @@ where name = '해물 파전';
 
 ## 메뉴 시드 데이터
 
-`supabase/seed_menus.sql`에는 한식, 아시아식, 양식 24개 메뉴를 추가하는 SQL이 있습니다. 모든 선택 값(`meal_time`, `meal_format`, `temperature`, `weight`, `spicy_level`, `company`, `main_ingredient`)을 사용해 결과가 한쪽으로 치우치지 않도록 구성했습니다.
+`supabase/seed_menus.sql`에는 분식집, 한식당, 중식당, 일반 파스타집과 프랜차이즈에서 쉽게 접할 수 있는 한식, 아시아식, 양식 메뉴를 추가하는 SQL이 있습니다. 모든 선택 값(`meal_time`, `meal_format`, `temperature`, `weight`, `spicy_level`, `company`, `main_ingredient`)을 사용해 결과가 한쪽으로 치우치지 않도록 구성했습니다.
 
-Supabase SQL Editor에서 먼저 `supabase/migrate_company_to_array.sql`을 실행하고, 이어서 `supabase/seed_menus.sql` 전체를 실행합니다.
+테이블을 새로 만들었을 때는 Supabase SQL Editor에서 다음 순서로 실행합니다.
+
+1. 잘못 생성된 테이블이 있으면 `supabase/recreate_menus_table.sql`, 없으면 `supabase/create_menus_table.sql`
+2. `supabase/seed_menus.sql`
+
+`create_menus_table.sql`은 앱에서 필요한 모든 열과 유효성 검사, 그리고 웹에서 메뉴를 읽을 수 있는 RLS 조회 정책을 만듭니다.

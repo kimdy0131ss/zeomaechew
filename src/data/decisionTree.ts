@@ -34,8 +34,8 @@ export const questions: Question[] = [
     title: '오늘 밖의 공기는 어떤가요?',
     options: [
       { label: '쌀쌀해요', value: 'hot', hint: '따뜻한 한 그릇이 필요해요' },
-      { label: '맑고 포근해요', value: 'mild', hint: '부담 없는 메뉴가 좋아요' },
-      { label: '덥고 습해요', value: 'cold', hint: '시원한 메뉴가 당겨요' },
+      { label: '따뜻해요', value: 'mild', hint: '부담 없는 메뉴가 좋아요' },
+      { label: '시원해요', value: 'cold', hint: '시원한 메뉴가 당겨요' },
     ],
   },
   {
