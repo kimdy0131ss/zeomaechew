@@ -132,6 +132,7 @@ function App() {
   const [node, setNode] = useState<DecisionTreeNode>(() => new MenuDecisionTree(sampleMenus).root)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [dataStatus, setDataStatus] = useState('Supabase 메뉴를 불러오는 중입니다.')
 
   const question = tree.getQuestion(node)
   const options = tree.getAvailableOptions(node)
@@ -145,11 +146,14 @@ function App() {
           const nextTree = new MenuDecisionTree(menus)
           setTree(nextTree)
           setNode(nextTree.root)
+          setDataStatus(`Supabase 메뉴 ${menus.length}개를 불러왔습니다.`)
         } else {
-          setError('Supabase 메뉴 데이터가 없거나 환경 변수가 설정되지 않아 예시 메뉴를 표시합니다.')
+          setDataStatus('Supabase 메뉴 데이터가 없거나 환경 변수가 설정되지 않아 예시 메뉴를 표시합니다.')
         }
-      } catch {
-        setError('메뉴를 불러오지 못해 예시 메뉴로 가지를 만들었어요.')
+      } catch (loadError) {
+        const detail = loadError instanceof Error ? ` (${loadError.message})` : ''
+        setError(`메뉴를 불러오지 못해 예시 메뉴로 가지를 만들었어요.${detail}`)
+        setDataStatus('예시 메뉴를 사용 중입니다.')
       } finally {
         setIsLoading(false)
       }
@@ -164,7 +168,6 @@ function App() {
 
   function restart() {
     setNode(tree.root)
-    setError('')
   }
 
   return (
@@ -190,7 +193,8 @@ function App() {
         </div>
       </section>
 
-      <section className="journey" aria-live="polite">
+        <section className="journey" aria-live="polite">
+          <p className={error ? 'data-status error' : 'data-status'}>{dataStatus}</p>
           <div className="progress" aria-label={`총 ${questions.length}단계 중 ${Math.min(node.questionIndex + 1, questions.length)}단계`}>
            {questions.map((item, index) => <span key={item.key} className={index <= node.questionIndex ? 'progress-node active' : 'progress-node'} />)}
         </div>

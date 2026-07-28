@@ -47,12 +47,28 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 한 메뉴를 혼자, 둘이, 여럿이 먹을 수 있도록 `company`에 복수 값을 저장할 수 있습니다. 앱은 기존 단일 텍스트 값과 PostgreSQL `text[]` 배열 값을 모두 지원합니다.
 
-Supabase SQL Editor에서 기존 `company` 열을 배열로 변경하려면 아래 SQL을 실행합니다.
+기존 제약 조건이 단일 문자열 비교를 사용하므로, Supabase SQL Editor에서 반드시 제약 조건을 먼저 삭제한 뒤 배열로 변환해야 합니다. 전체 마이그레이션은 `supabase/migrate_company_to_array.sql`에 있습니다.
 
 ```sql
 alter table public.menus
+drop constraint if exists menus_company_check;
+
+alter table public.menus
 alter column company type text[]
-using array[company];
+using case
+  when company is null then null
+  else string_to_array(company, ',')
+end;
+
+alter table public.menus
+add constraint menus_company_check
+check (
+  company is null
+  or (
+    cardinality(company) > 0
+    and company <@ array['solo', 'pair', 'group']::text[]
+  )
+);
 ```
 
 이후 메뉴의 인원 조건은 다음처럼 설정합니다.
@@ -69,4 +85,4 @@ where name = '해물 파전';
 
 `supabase/seed_menus.sql`에는 한식, 아시아식, 양식 24개 메뉴를 추가하는 SQL이 있습니다. 모든 선택 값(`meal_time`, `meal_format`, `temperature`, `weight`, `spicy_level`, `company`, `main_ingredient`)을 사용해 결과가 한쪽으로 치우치지 않도록 구성했습니다.
 
-Supabase SQL Editor에서 `company` 열을 `text[]`로 변경한 뒤, `supabase/seed_menus.sql` 전체를 실행합니다.
+Supabase SQL Editor에서 먼저 `supabase/migrate_company_to_array.sql`을 실행하고, 이어서 `supabase/seed_menus.sql` 전체를 실행합니다.

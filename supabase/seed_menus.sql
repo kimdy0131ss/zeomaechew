@@ -1,5 +1,5 @@
 -- MENU TREE sample menu data.
--- Run after changing public.menus.company to text[] as documented in WORK_LOG.md.
+-- Run supabase/migrate_company_to_array.sql before this file.
 
 insert into public.menus (
   name, category, price_from, price_to, weight, temperature, spicy_level,
